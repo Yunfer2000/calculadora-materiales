@@ -1,0 +1,70 @@
+/*
+ * Este archivo consolida los estilos CSS personalizados encontrados en los
+ * bloques <style> de 'index.html' y 'muro_calculator.html'.
+ *
+ * NOTA: La mayor parte del diseño y la responsividad provienen de las clases
+ * de Tailwind CSS incrustadas en el HTML.
+*/
+
+/* --- Estilos de index.html (Menú Principal) --- */
+
+/* Estilo de fondo del cuerpo (aunque 'muro_calculator' usa otro color) */
+body {
+    font-family: 'Inter', sans-serif;
+    /* Color de index.html: */
+    background-color: #f0fdf4; /* emerald-50 */
+}
+
+/* Efecto de elevación y hover para las tarjetas del menú */
+.card {
+    transition: all 0.3s ease;
+    transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+.card:hover {
+    transform: translateY(-4px);
+    /* Usando el color principal: #10b981 */
+    box-shadow: 0 10px 15px rgba(16, 185, 129, 0.2), 0 4px 6px rgba(16, 185, 129, 0.1);
+}
+
+/* --- Estilos de muro_calculator.html (Calculadora de Muros) --- */
+
+/* Sobrescribe el fondo para el módulo de muros */
+body {
+    background-color: #fffbeb; /* amber-50 */
+}
+
+/* Estilo para el contenedor principal de la calculadora */
+.container-card {
+    background-color: white;
+    /* Sombra basada en el color de albañilería: #92400e */
+    box-shadow: 0 10px 25px rgba(146, 64, 14, 0.15); 
+}
+
+/* Estilos de las etiquetas de formulario */
+.input-group label {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+/* Estilos base para campos de entrada y selección */
+.input-group input, .input-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    transition: border-color 0.2s;
+}
+
+/* Estilos al enfocar (focus) los campos, usando color albañilería */
+.input-group input:focus, .input-group select:focus {
+    border-color: #92400e; /* Albañileria color */
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(146, 64, 14, 0.2);
+}
+
+/* Estilo para el encabezado de las tablas de resultados */
+.table-header {
+    background-color: #fde68a; /* amber-200 */
+    color: #78350f; /* amber-900 */
+}

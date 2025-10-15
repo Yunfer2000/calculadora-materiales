@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrado de Tarrajeo (Revoque)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        acabado: '#059669', // emerald-600
+                        fondo: '#f0fdf4', // emerald-50
+                    }
+                }
+            }
+        }
+
+        // --- COEFICIENTES DE MORTERO (PARA 1 m³) ---
+        // Basado en dosificaciones comunes y desperdicios típicos
+        const MORTERO_COEFICIENTES = {
+            proporcion: "1 : 5",
+            cementoBolsas: 9.7, // Bolsas de 42.5 kg por 1 m³ de mortero
+            arena: 1.05,        // m³ de arena (fina) por 1 m³ de mortero (incluye desperdicio)
+        };
+        
+        // Coeficiente de volumen de mortero por m² de tarrajeo (para 1.5 cm de espesor)
+        const ESPESOR_DEFAULT = 0.015; // 1.5 cm
+
+        // Precio unitario referencial (S/)
+        const UNIT_PRICES = {
+            CEMENTO_BOLSA: 25.00, 
+            ARENA_M3: 75.00, // Arena Fina
+        }
+
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* emerald-50 */
+        }
+        .container-card {
+            background-color: white;
+            box-shadow: 0 10px 25px rgba(5, 150, 105, 0.1); /* Sombra de acabado */
+        }
+        .input-group label {
+            font-weight: 500;
+            color: #1f2937;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus, .input-group select:focus {
+            border-color: #059669; /* Acabado color */
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+        }
+        .table-header {
+            background-color: #a7f3d0; /* emerald-200 */
+            color: #065f46; /* emerald-800 */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 min-h-screen flex items-center justify-center">
+
+    <div class="w-full max-w-4xl container-card rounded-2xl p-6 sm:p-10 border border-acabado/30">
+        
+        <header class="text-center mb-8">
+            <a href="index.html" class="flex items-center text-gray-500 hover:text-acabado transition duration-150 mb-4 text-sm font-medium">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Volver al Menú Principal
+            </a>
+            <h2 class="text-3xl font-bold text-acabado">
+                Metrado de Tarrajeo (Revoque / Enlucido)
+            </h2>
+            <p class="text-gray-500">
+                Calcula el cemento y la **arena fina** necesarios para tarrajear muros o cielo rasos.
+            </p>
+        </header>
+
+        <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Error:</strong>
+            <span class="block sm:inline" id="error-text"></span>
+        </div>
+
+        <form id="tarrajeo-form">
+            
+            <!-- SECCIÓN 1: DATOS DE ÁREA -->
+            <h3 class="text-xl font-semibold mb-3 text-gray-700 border-b pb-1 border-emerald-100">1. Dimensiones, Espesor y Proporción</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <!-- Largo (L) -->
+                <div class="input-group">
+                    <label for="largo" class="block text-sm text-gray-700">Largo Total [m]</label>
+                    <input type="number" step="0.1" min="0.1" id="largo" value="15" required>
+                    <p class="text-xs text-gray-500 mt-1">Largo acumulado de los paños a tarrajear.</p>
+                </div>
+                <!-- Altura (H) -->
+                <div class="input-group">
+                    <label for="altura" class="block text-sm text-gray-700">Altura Promedio [m]</label>
+                    <input type="number" step="0.1" min="0.1" id="altura" value="2.5" required>
+                    <p class="text-xs text-gray-500 mt-1">Altura promedio del muro o ancho de cielo raso.</p>
+                </div>
+                <!-- Espesor (e) -->
+                <div class="input-group">
+                    <label for="espesor" class="block text-sm text-gray-700">Espesor del Tarrajeo [m]</label>
+                    <input type="number" step="0.001" min="0.005" id="espesor" value="0.015" required>
+                    <p class="text-xs text-gray-500 mt-1">Típico: 0.015m (1.5 cm).</p>
+                </div>
+                <!-- Proporción (C:AF) -->
+                <div class="input-group">
+                    <label for="proporcion" class="block text-sm text-gray-700">Proporción Mortero (C:AF)</label>
+                    <select id="proporcion" class="w-full p-3 border border-gray-300 rounded-lg bg-white appearance-none transition duration-150">
+                        <option value="1:5" selected>1:5 (Típico Muro / Cielo Raso)</option>
+                        <option value="1:4">1:4 (Mortero más resistente)</option>
+                        <option value="1:3">1:3 (Mortero muy rico)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">C:AF = Cemento : Arena Fina</p>
+                </div>
+            </div>
+
+            <p class="text-sm text-gray-600 mb-6 border-b pb-4">
+                <span class="font-bold text-acabado">Área Calculada:</span> <span id="area-display" class="font-semibold text-gray-800">0.00 m²</span>. Recuerda descontar áreas de vanos grandes (puertas/ventanas).
+            </p>
+
+            <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
+                <a href="index.html" class="px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-lg shadow-sm hover:bg-gray-50 transition duration-200">
+                    Volver al Menú Principal
+                </a>
+                <button type="submit" class="px-6 py-3 bg-acabado text-white font-bold rounded-lg shadow-lg hover:bg-emerald-700 transition duration-200">
+                    Calcular Materiales y Costos
+                </button>
+            </div>
+        </form>
+        
+        <!-- Sección de Resultados y Carga -->
+        <div id="loading-indicator" class="hidden text-center mt-8">
+            <div class="animate-spin inline-block w-8 h-8 border-4 border-acabado border-t-transparent rounded-full" role="status"></div>
+            <p class="mt-2 text-acabado font-semibold">Calculando materiales para tarrajeo...</p>
+        </div>
+
+        <div id="tarrajeo-results" class="hidden mt-8 p-6 bg-fondo rounded-xl border-2 border-acabado/50 shadow-md">
+            <h3 class="text-2xl font-bold text-acabado mb-4 border-b border-emerald-200 pb-2">Resultados Consolidados del Metrado</h3>
+            <div id="results-content" class="text-gray-700">
+                <!-- Los resultados se inyectarán aquí -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- REFERENCIAS DE ELEMENTOS ---
+        const tarrajeoForm = document.getElementById('tarrajeo-form');
+        const tarrajeoResults = document.getElementById('tarrajeo-results');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const areaDisplay = document.getElementById('area-display');
+        const largoInput = document.getElementById('largo');
+        const alturaInput = document.getElementById('altura');
+
+        // --- FUNCIÓN PARA CALCULAR Y MOSTRAR EL ÁREA ---
+        function updateAreaDisplay() {
+            const L = parseFloat(largoInput.value) || 0;
+            const H = parseFloat(alturaInput.value) || 0;
+            const A_total = L * H;
+            areaDisplay.textContent = `${A_total.toFixed(2)} m²`;
+        }
+
+        // Inicializar el display y agregar listeners
+        updateAreaDisplay();
+        largoInput.addEventListener('input', updateAreaDisplay);
+        alturaInput.addEventListener('input', updateAreaDisplay);
+
+
+        // --- FUNCIÓN DE CÁLCULO LOCAL ---
+        function calculateLocalMaterials() {
+            hideError();
+            
+            // 1. Obtener datos de entrada y validación
+            const L = parseFloat(largoInput.value) || 0; 
+            const H = parseFloat(alturaInput.value) || 0;
+            const e = parseFloat(document.getElementById('espesor').value) || 0; // Espesor
+            const prop = document.getElementById('proporcion').value;
+
+            const A_total = L * H;
+
+            if (A_total <= 0 || e <= 0) {
+                 displayError("Verifica que Largo, Altura y Espesor sean valores positivos para calcular el área.");
+                 return null;
+            }
+
+            // 2. CÁLCULO DE VOLUMEN DE MORTERO
+            // Volumen de mortero necesario (sin desperdicio ni coeficientes de mortero)
+            const V_mortero_neto = A_total * e; 
+
+            // Aplicar coeficientes de la tabla (usando la proporción 1:5 como base, es el más común)
+            const V_mortero_total = V_mortero_neto * 1.05; // Asume un 5% de desperdicio
+
+            // 3. CÁLCULO DE MATERIALES (Ajuste por proporción y coeficientes)
+            // Para el cálculo local, asumiremos los coeficientes de 1:5 para dar un estimado.
+            const cementoBolsas = V_mortero_total * MORTERO_COEFICIENTES.cementoBolsas;
+            const arenaM3 = V_mortero_total * MORTERO_COEFICIENTES.arena;
+            
+
+            // 4. Resumen de Materiales
+            return {
+                Largo: L,
+                Altura: H,
+                A_total: A_total,
+                espesor: e,
+                proporcion: prop,
+                V_mortero_total: V_mortero_total,
+                
+                // Materiales (basado en 1:5 para estimación local)
+                cementoBolsas: cementoBolsas,
+                arenaM3: arenaM3,
+            };
+        }
+        
+        // --- FUNCIONES DE UTILIDAD ---
+        function displayError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+        
+        // --- FUNCIÓN PARA LLAMAR A LA API (CÁLCULO DE COSTOS Y AJUSTE FINO DE MATERIALES) ---
+        async function fetchConsolidatedResults(materials) {
+            
+            // El prompt ahora incluye las dimensiones para mayor detalle y la especificación de Arena Fina.
+            const prompt = `Calcula los costos totales y ajusta las cantidades de los siguientes materiales para tarrajeo con una **Proporción de Mortero ${materials.proporcion} (Cemento : Arena Fina)**. Devuelve el resultado en el formato JSON estricto.
+
+            Metrado de Ingeniería (Dimensiones y Volumen):
+            - Área Total a Tarrajear (Largo ${materials.Largo.toFixed(2)} m x Altura ${materials.Altura.toFixed(2)} m): ${materials.A_total.toFixed(2)} m2
+            - Espesor: ${materials.espesor.toFixed(3)} m
+            - Volumen total de Mortero (Asumiendo 5% desperdicio): ${materials.V_mortero_total.toFixed(3)} m3
+            
+            Materiales (refinar cantidades de Cemento y Arena Fina basado en la proporción ${materials.proporcion} y el volumen total de mortero):
+            - Bolsas de Cemento (42.5kg)
+            - Arena Fina (m3)
+
+            Precios Unitarios (Usar Soles Peruanos - S/):
+            - Cemento (bolsa): S/ ${UNIT_PRICES.CEMENTO_BOLSA.toFixed(2)}
+            - Arena Fina (m³): S/ ${UNIT_PRICES.ARENA_M3.toFixed(2)}
+            
+            Formato JSON requerido:
+            [
+              {"nombre": "Cemento", "cantidad": "90.30", "unidad": "bolsas", "costo_unitario": "25.00", "costo_total": "2257.50"},
+              ...
+            ]
+            `;
+
+            const systemPrompt = `Eres un asistente de ingeniería civil que calcula metrados y costos. Tu única tarea es devolver el listado de materiales y costos totales basados en el prompt de usuario. Para la proporción ${materials.proporcion} (Cemento : Arena Fina), calcula la cantidad exacta de Cemento (bolsas) y Arena Fina (m3) requerida para el Volumen total de Mortero (${materials.V_mortero_total.toFixed(3)} m3) usando coeficientes de metrado estándar, y luego calcula el costo. NO añadas texto introductorio, explicaciones, ni texto fuera del JSON. El formato debe ser un ARRAY de objetos JSON. Todos los valores numéricos de cantidad y costos deben estar como strings con dos decimales, usando punto como separador decimal.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                 generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "nombre": { "type": "STRING" },
+                                "cantidad": { "type": "STRING" },
+                                "unidad": { "type": "STRING" },
+                                "costo_unitario": { "type": "STRING" },
+                                "costo_total": { "type": "STRING" }
+                            },
+                            "propertyOrdering": ["nombre", "cantidad", "unidad", "costo_unitario", "costo_total"]
+                        }
+                    }
+                }
+            };
+
+            const API_KEY = ""; // Provided by environment
+            const API_MODEL = "gemini-2.5-flash-preview-05-20";
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${API_KEY}`;
+
+
+            // Implementación de Backoff Exponencial
+            const maxRetries = 3;
+            let currentDelay = 1000; // 1 second
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429 && i < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, currentDelay));
+                        currentDelay *= 2;
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    return JSON.parse(jsonText);
+                    
+                } catch (e) {
+                    console.error(`Error en intento ${i + 1}:`, e.message);
+                    if (i === maxRetries - 1) {
+                         throw e; // Lanza el error después del último intento fallido
+                    }
+                    await new Promise(resolve => setTimeout(resolve, currentDelay));
+                    currentDelay *= 2;
+                }
+            }
+            return null; 
+        }
+
+        // --- FUNCIÓN PRINCIPAL DE METRADO ---
+        async function calculateConsolidatedMaterials(event) {
+            event.preventDefault();
+            
+            const materials = calculateLocalMaterials();
+            if (!materials) {
+                tarrajeoResults.classList.add('hidden');
+                return;
+            }
+
+            loadingIndicator.classList.remove('hidden');
+            tarrajeoResults.classList.add('hidden');
+            document.getElementById('results-content').innerHTML = '';
+
+            const { Largo, Altura, A_total, espesor, proporcion, V_mortero_total } = materials;
+            
+            // 1. Mostrar metrados de ingeniería
+            let html = `
+                <h4 class="text-lg font-bold text-gray-800 mb-3">Metrado de Ingeniería (Resumen)</h4>
+                <div class="grid grid-cols-2 gap-x-6 gap-y-2 mb-4 text-sm">
+                    <p class="font-semibold text-acabado">Largo x Altura:</p>
+                    <p class="text-right">${Largo.toFixed(2)} m x ${Altura.toFixed(2)} m</p>
+                    <p class="font-semibold text-acabado">Área Total Tarrajeada:</p>
+                    <p class="text-right">${A_total.toFixed(2)} m²</p>
+                    <p class="font-semibold text-acabado">Espesor Considerado:</p>
+                    <p class="text-right">${(espesor * 100).toFixed(1)} cm</p>
+                    <p class="font-semibold text-acabado">Proporción de Mortero (C:AF):</p>
+                    <p class="text-right">${proporcion} (Cemento : Arena Fina)</p>
+                    <p class="font-semibold text-acabado">Volumen Total Estimado de Mortero (incl. 5% desp.):</p>
+                    <p class="text-right">${V_mortero_total.toFixed(3)} m³</p>
+                </div>
+            `;
+            
+            // 2. Llamar a la API para obtener el listado de costos (Asíncrono)
+            let resultsArray = null;
+            try {
+                resultsArray = await fetchConsolidatedResults(materials);
+            } catch (error) {
+                console.error("Error fatal en el metrado de costos:", error);
+                displayError("Error grave al calcular costos. Se muestran solo metrados de volumen.");
+            }
+            
+            loadingIndicator.classList.add('hidden');
+
+            if (resultsArray && resultsArray.length > 0) {
+                let totalCost = 0;
+
+                // Construir tabla de resultados
+                let tableHtml = `
+                    <h4 class="text-lg font-bold text-gray-800 mb-3 mt-4">Cálculo de Materiales y Costos (S/)</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Material</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium uppercase tracking-wider">Cantidad</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium uppercase tracking-wider">Costo Unitario (S/)</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium uppercase tracking-wider">Costo Total (S/)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                `;
+                
+                resultsArray.forEach(item => {
+                    // Se asegura de manejar la conversión de string a número correctamente
+                    const cost = parseFloat(item.costo_total.replace(',', '.'));
+                    totalCost += cost;
+
+                    tableHtml += `
+                        <tr>
+                            <td class="px-3 py-2 whitespace-nowrap">${item.nombre}</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-right">${item.cantidad} ${item.unidad}</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-right">S/ ${parseFloat(item.costo_unitario.replace(',', '.')).toFixed(2)}</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-right font-medium">S/ ${cost.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += `
+                            </tbody>
+                            <tfoot class="bg-emerald-100/50 border-t-2 border-acabado">
+                                <tr>
+                                    <td colspan="3" class="px-3 py-2 text-right font-bold text-base text-gray-800">Costo Total Estimado de Materiales:</td>
+                                    <td class="px-3 py-2 text-right font-bold text-base text-acabado">S/ ${totalCost.toFixed(2)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                `;
+                
+                html += tableHtml;
+            } else {
+                html += `<p class="text-red-600 mt-4">No se pudieron obtener los costos. Se muestra únicamente el metrado de volumen/masa.</p>`;
+            }
+
+            document.getElementById('results-content').innerHTML = html;
+            tarrajeoResults.classList.remove('hidden');
+        }
+        
+        tarrajeoForm.addEventListener('submit', calculateConsolidatedMaterials);
+
+    </script>
+
+</body>
+</html>
