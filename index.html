@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú de Cubicaciones</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuración de fuente Inter para la interfaz */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            min-height: 100vh;
+        }
+        .card-option {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border: 1px solid #e0e0e0;
+        }
+        .card-option:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            border-color: #3b82f6;
+        }
+        .icon-image {
+            width: 48px;
+            height: 48px;
+            margin: auto;
+            border-radius: 8px; /* Aplicar esquinas redondeadas a las imágenes */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e0f2f1; /* Fondo suave para los iconos SVG/Emoji */
+        }
+        .custom-icon {
+            font-size: 30px;
+        }
+
+        /* Estilos mejorados para los resultados de la IA (Aplicado a todos) */
+        .results-markdown {
+            white-space: pre-wrap;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        /* Estilo para los títulos de sección dentro del markdown (1. y 2.) */
+        .results-markdown h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #10b981; /* Default green-500 */
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 2px solid #a7f3d0; 
+            padding-bottom: 5px;
+        }
+        /* Sobreescribir color del título para Muro */
+        #wall-results-output h3 {
+            color: #3b82f6; /* Blue-500 */
+            border-bottom-color: #bfdbfe; /* Blue-200 */
+        }
+         /* Sobreescribir color del título para Techo */
+        #roof-results-output h3 {
+            color: #9333ea; /* Purple-600 */
+            border-bottom-color: #d8b4fe; /* Purple-200 */
+        }
+         /* Sobreescribir color del título para Columna */
+        #column-results-output h3 {
+            color: #ef4444; /* Red-500 */
+            border-bottom-color: #fecaca; /* Red-200 */
+        }
+
+        /* Estilo para los ítems de resultado (listas o texto plano) */
+        .results-markdown p strong {
+            color: #065f46; /* Default green-800 */
+        }
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/1.1.1/marked.min.js"></script>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+
+    <!-- Menú Principal -->
+    <div id="main-menu" class="w-full max-w-4xl">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-blue-700">Calculadora de Materiales</h1>
+            <p class="mt-2 text-xl text-gray-600">Selecciona el elemento a dimensionar.</p>
+        </header>
+
+        <!-- Opciones de Cálculo -->
+        <!-- En pantallas pequeñas (sm y mayores), el grid de 2 columnas asegura que Techo y Muro estén arriba, y Columna y Tarrajeo abajo. -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+
+            <!-- Opción Techo (Losa) -->
+            <div class="card-option bg-white p-6 rounded-xl shadow-lg" onclick="showRoofCalculator()">
+                <div class="mb-3 icon-image bg-purple-50">
+                    <span class="custom-icon">🏗️</span> <!-- Icono Construcción/Techo -->
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 text-center">Techo (Losa)</h2>
+                <p class="text-sm text-gray-500 mt-1 text-center">Consolidado Viga y Losa.</p>
+            </div>
+
+            <!-- Opción Muro -->
+            <div class="card-option bg-white p-6 rounded-xl shadow-lg" onclick="showWallCalculator(); loadBrickDefaults()">
+                <div class="mb-3 icon-image">
+                    <span class="custom-icon">🧱</span> <!-- Icono Ladrillo/Muro -->
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 text-center">Muro</h2>
+                <p class="text-sm text-gray-500 mt-1 text-center">Ladrillos, mortero y cimientos.</p>
+            </div>
+
+            <!-- Opción Columna -->
+            <div class="card-option bg-white p-6 rounded-xl shadow-lg" onclick="showColumnCalculator()">
+                <div class="mb-3 icon-image bg-red-50">
+                    <span class="custom-icon">🔼</span> <!-- Icono Columna -->
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 text-center">Columna</h2>
+                <p class="text-sm text-gray-500 mt-1 text-center">Acero de refuerzo y concreto.</p>
+            </div>
+
+            <!-- Opción Tarrajeo -->
+            <div class="card-option bg-white p-6 rounded-xl shadow-lg" onclick="showPlasterCalculator()">
+                <div class="mb-3 icon-image bg-green-50">
+                    <span class="custom-icon">🖌️</span> <!-- Icono Acabado/Brocha -->
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 text-center">Tarrajeo</h2>
+                <p class="text-sm text-gray-500 mt-1 text-center">Mortero para acabado de paredes.</p>
+            </div>
+            
+        </div>
+        <!-- Fin Opciones de Cálculo -->
+
+    </div> 
+    <!-- Fin Menú Principal -->
+
+    <!-- Modal de Mensajes -->
+    <div id="message-box" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full text-center">
+            <p id="message-text" class="text-lg font-semibold text-gray-800 mb-4"></p>
+            <button onclick="hideMessage()" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-150">
+                Aceptar
+            </button>
+        </div>
+    </div>
+
+    <!-- Panel Calculadora de Muro (Wall) -->
+    <div id="wall-calculator-panel" class="w-full max-w-xl p-6 bg-white rounded-xl shadow-2xl hidden">
+        <header class="mb-6 border-b pb-4">
+            <h2 class="text-3xl font-bold text-blue-700 text-center">📐 Cálculo de Muro</h2>
+            <p class="text-sm text-gray-500 mt-2 text-center">Ingresa las especificaciones de tu muro.</p>
+        </header>
+
+        <form onsubmit="event.preventDefault(); calculateWallMaterials()" class="space-y-4">
+            
+            <div class="flex flex-col">
+                <label for="brick-type" class="text-base font-medium text-gray-700 mb-1">Tipo de Ladrillo</label>
+                <select id="brick-type" onchange="loadBrickDefaults()" class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <option value="King Kong 18">King Kong 18</option>
+                    <option value="King Kong Macizo">King Kong Macizo</option>
+                    <option value="Pandereta">Pandereta</option>
+                    <option value="Otro">Otro (Ingresar medidas)</option>
+                </select>
+            </div>
+
+            <div id="custom-brick-dimensions" class="space-y-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p class="text-sm font-semibold text-gray-700">Dimensiones del Ladrillo (en cm, sin contar junta)</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="flex flex-col">
+                        <label for="custom-length" class="text-xs font-medium text-gray-600 mb-1">Largo (cm)</label>
+                        <input type="number" id="custom-length" placeholder="Ej: 24" step="0.1" required class="p-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="custom-width" class="text-xs font-medium text-gray-600 mb-1">Ancho (cm)</label>
+                        <input type="number" id="custom-width" placeholder="Ej: 13" step="0.1" required class="p-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="custom-height" class="text-xs font-medium text-gray-600 mb-1">Alto (cm)</label>
+                        <input type="number" id="custom-height" placeholder="Ej: 9" step="0.1" required class="p-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="laying-mode" class="text-base font-medium text-gray-700 mb-1">Disposición</label>
+                <select id="laying-mode" class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <option value="soga">Soga</option>
+                    <option value="cabeza">Cabeza</option>
+                </select>
+            </div>
+            
+            <p class="text-xs text-gray-500 italic mt-1">
+                *Nota: La junta de mortero se considera fija en 1.5 cm.
+            </p>
+
+            <div class="flex flex-col">
+                <label for="wall-length" class="text-base font-medium text-gray-700 mb-1">Largo del Muro (m)</label>
+                <input type="number" id="wall-length" placeholder="Ej: 5.0" step="0.1" required class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div class="flex flex-col">
+                <label for="wall-height" class="text-base font-medium text-gray-700 mb-1">Altura del Muro (m)</label>
+                <input type="number" id="wall-height" placeholder="Ej: 2.8" step="0.1" required class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-200 shadow-md">
+                Calcular Materiales y Costos
+            </button>
+            <button type="button" onclick="showMainMenu()" class="w-full bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-400 transition duration-200">
+                Volver al Menú Principal
+            </button>
+        </form>
+
+        <div id="wall-results-container" class="mt-6 p-4 bg-blue-50 rounded-xl shadow-inner hidden">
+            <h3 class="text-2xl font-extrabold text-blue-700 mb-4 text-center">✅ Resultados del Metrado de Muro</h3>
+            <div id="wall-results-output" class="results-markdown"></div>
+        </div>
+        <div id="wall-loading-indicator" class="mt-6 text-center text-blue-600 hidden">
+            Calculando... por favor espera.
+        </div>
+        <div id="wall-error-message" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden">
+            Ocurrió un error en el cálculo. Por favor, inténtalo de nuevo.
+        </div>
+    </div>
+    <!-- Fin Panel Muro -->
+
+    <!-- Panel Calculadora de Tarrajeo (Plaster) -->
+    <div id="plaster-calculator-panel" class="w-full max-w-xl p-6 bg-white rounded-xl shadow-2xl hidden">
+        <header class="mb-6 border-b pb-4">
+            <h2 class="text-3xl font-bold text-green-700 text-center">🖌️ Cálculo de Tarrajeo (Revoque)</h2>
+            <p class="text-sm text-gray-500 mt-2 text-center">Ingresa las dimensiones de la superficie a tarrajear.</p>
+        </header>
+
+        <form onsubmit="event.preventDefault(); calculatePlasterMaterials()" class="space-y-4">
+            
+            <div class="flex flex-col">
+                <label for="plaster-length" class="text-base font-medium text-gray-700 mb-1">Largo de la Superficie (m)</label>
+                <input type="number" id="plaster-length" placeholder="Ej: 5.0" step="0.1" required class="p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+            </div>
+
+            <div class="flex flex-col">
+                <label for="plaster-height" class="text-base font-medium text-gray-700 mb-1">Altura de la Superficie (m)</label>
+                <input type="number" id="plaster-height" placeholder="Ej: 2.8" step="0.1" required class="p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+            </div>
+            
+            <div class="flex flex-col">
+                <label for="plaster-thickness" class="text-base font-medium text-gray-700 mb-1">Espesor del Tarrajeo (cm)</label>
+                <input type="number" id="plaster-thickness" placeholder="Ej: 1.5" value="1.5" step="0.1" required class="p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                <p class="text-xs text-gray-500 mt-1 italic">* Espesor recomendado es de 1.5 cm a 2.0 cm.</p>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="plaster-dosification" class="text-base font-medium text-gray-700 mb-1">Dosificación Mortero (Cemento:Arena)</label>
+                <select id="plaster-dosification" class="p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    <option value="1:4">1:4 (Revoques exteriores)</option>
+                    <option value="1:5" selected>1:5 (Revoques interiores)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="w-full bg-green-600 text-white font-semibold py-3 rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
+                Calcular Mortero y Costos
+            </button>
+            <button type="button" onclick="showMainMenu()" class="w-full bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-400 transition duration-200">
+                Volver al Menú Principal
+            </button>
+        </form>
+
+        <div id="plaster-results-container" class="mt-6 p-4 bg-green-50 rounded-xl shadow-inner hidden">
+            <h3 class="text-2xl font-extrabold text-green-700 mb-4 text-center">✅ Resultados del Metrado de Tarrajeo</h3>
+            <div id="plaster-results-output" class="results-markdown"></div> <!-- Contenedor para el Markdown renderizado -->
+        </div>
+        <div id="plaster-loading-indicator" class="mt-6 text-center text-green-600 hidden">
+            Calculando... por favor espera.
+        </div>
+        <div id="plaster-error-message" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden">
+            Ocurrió un error en el cálculo. Por favor, inténtalo de nuevo.
+        </div>
+    </div>
+    <!-- Fin Panel Tarrajeo -->
+
+    <!-- Panel Calculadora de Techo (Roof) -->
+    <div id="roof-calculator-panel" class="w-full max-w-xl p-6 bg-white rounded-xl shadow-2xl hidden">
+        <header class="mb-6 border-b pb-4">
+            <h2 class="text-3xl font-bold text-purple-700 text-center">🏗️ Cálculo Total de Losa y Vigas</h2>
+            <p class="text-sm text-gray-500 mt-2 text-center">Dosificación C210. Ingresa las dimensiones de todos los elementos.</p>
+        </header>
+
+        <form onsubmit="event.preventDefault(); calculateConsolidatedRoofMaterials()" class="space-y-6">
+            
+            <div class="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <h3 class="text-xl font-bold text-indigo-700 mb-3">Datos de Vigas (Volumen de Concreto)</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <label for="beam-width" class="text-base font-medium text-gray-700 mb-1">Ancho Viga (m)</label>
+                        <input type="number" id="beam-width" placeholder="Ej: 0.25" value="0.25" step="0.01" required class="p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="beam-length" class="text-base font-medium text-gray-700 mb-1">Largo Viga (m)</label>
+                        <input type="number" id="beam-length" placeholder="Ej: 5.0" value="5.0" step="0.1" required class="p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div class="flex flex-col">
+                        <label for="beam-height" class="text-base font-medium text-gray-700 mb-1">Altura Viga (m)</label>
+                        <input type="number" id="beam-height" placeholder="Ej: 0.40" value="0.40" step="0.01" required class="p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="beam-quantity" class="text-base font-medium text-gray-700 mb-1">Cantidad de Vigas Iguales</label>
+                        <input type="number" id="beam-quantity" placeholder="Ej: 3" value="3" step="1" min="1" required class="p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-pink-50 rounded-lg border border-pink-200">
+                <h3 class="text-xl font-bold text-pink-700 mb-3">Datos de Losa (Volumen de Concreto)</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <label for="slab-thickness" class="text-base font-medium text-gray-700 mb-1">Espesor Losa (m)</label>
+                        <input type="number" id="slab-thickness" placeholder="Ej: 0.20" value="0.20" step="0.01" required class="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="slab-length" class="text-base font-medium text-gray-700 mb-1">Largo Losa (m)</label>
+                        <input type="number" id="slab-length" placeholder="Ej: 6.0" value="6.0" step="0.1" required class="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div class="flex flex-col">
+                        <label for="slab-width" class="text-base font-medium text-gray-700 mb-1">Ancho Losa (m)</label>
+                        <input type="number" id="slab-width" placeholder="Ej: 4.0" value="4.0" step="0.1" required class="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="slab-quantity" class="text-base font-medium text-gray-700 mb-1">Cantidad de Losas Iguales</label>
+                        <input type="number" id="slab-quantity" placeholder="Ej: 1" value="1" step="1" min="1" required class="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-purple-600 text-white font-semibold py-3 rounded-lg hover:bg-purple-700 transition duration-200 shadow-lg">
+                Calcular CONCRETO TOTAL (Vigas + Losa)
+            </button>
+            <button type="button" onclick="showMainMenu()" class="w-full bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-400 transition duration-200">
+                Volver al Menú Principal
+            </button>
+        </form>
+
+        <div id="roof-results-container" class="mt-6 p-4 bg-purple-50 rounded-xl shadow-inner hidden">
+            <h3 class="text-2xl font-extrabold text-purple-700 mb-4 text-center">✅ Resultados Consolidados de Losa y Vigas</h3>
+            <div id="roof-results-output" class="results-markdown"></div>
+        </div>
+        <div id="roof-loading-indicator" class="mt-6 text-center text-purple-600 hidden">
+            Calculando volumen total de concreto... por favor espera.
+        </div>
+        <div id="roof-error-message" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden">
+            Ocurrió un error en el cálculo. Por favor, inténtalo de nuevo.
+        </div>
+    </div>
+    <!-- Fin Panel Techo -->
+
+    <!-- Panel Calculadora de Columna (Column) -->
+    <div id="column-calculator-panel" class="w-full max-w-xl p-6 bg-white rounded-xl shadow-2xl hidden">
+        <header class="mb-6 border-b pb-4">
+            <h2 class="text-3xl font-bold text-red-700 text-center">🧱 Cálculo de Columna (Concreto y Acero)</h2>
+            <p class="text-sm text-gray-500 mt-2 text-center">Calcula el volumen de concreto y el peso de acero longitudinal y estribos.</p>
+        </header>
+
+        <form onsubmit="event.preventDefault(); calculateColumnMaterials()" class="space-y-6">
+            
+            <div class="p-4 bg-red-50 rounded-lg border border-red-200 space-y-4">
+                <h3 class="text-xl font-bold text-red-700 mb-3">Geometría y Cantidad</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <label for="col-base" class="text-base font-medium text-gray-700 mb-1">Base (b) (m)</label>
+                        <input type="number" id="col-base" placeholder="Ej: 0.25" value="0.25" step="0.01" required class="p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="col-side" class="text-base font-medium text-gray-700 mb-1">Lado (h) (m)</label>
+                        <input type="number" id="col-side" placeholder="Ej: 0.30" value="0.30" step="0.01" required class="p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <label for="col-height" class="text-base font-medium text-gray-700 mb-1">Altura Columna (m)</label>
+                        <input type="number" id="col-height" placeholder="Ej: 2.80" value="2.80" step="0.1" required class="p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="col-quantity" class="text-base font-medium text-gray-700 mb-1">Cantidad de Columnas</label>
+                        <input type="number" id="col-quantity" placeholder="Ej: 4" value="4" step="1" min="1" required class="p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+                <h3 class="text-xl font-bold text-gray-700 mb-3">Refuerzo y Dosificación</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <label for="col-dosification" class="text-base font-medium text-gray-700 mb-1">Dosificación Concreto (f'c)</label>
+                        <select id="col-dosification" class="p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                            <option value="210">210 kg/cm² (8.5 C, 0.48 A, 0.89 P)</option>
+                            <option value="175">175 kg/cm² (7.5 C, 0.50 A, 0.82 P)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="col-steel-rate" class="text-base font-medium text-gray-700 mb-1">Acero Longitudinal (kg/m³)</label>
+                        <input type="number" id="col-steel-rate" placeholder="Ej: 120" value="120" step="1" required class="p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                        <p class="text-xs text-gray-500 mt-1">Estimación común: 100-150 kg/m³.</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <label for="stirrup-spacing" class="text-base font-medium text-gray-700 mb-1">Separación Estribos (s) (m)</label>
+                        <input type="number" id="stirrup-spacing" placeholder="Ej: 0.15" value="0.15" step="0.01" required class="p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                        <p class="text-xs text-gray-500 mt-1">Estribo phi 3/8" o phi 1/2".</p>
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="stirrup-diameter" class="text-base font-medium text-gray-700 mb-1">Diámetro Estribo (phi) (mm)</label>
+                        <select id="stirrup-diameter" class="p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                            <option value="6">6 mm (0.222 kg/m)</option>
+                            <option value="8" selected>8 mm (0.395 kg/m)</option>
+                            <option value="9.5">3/8" (0.56 kg/m)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-red-600 text-white font-semibold py-3 rounded-lg hover:bg-red-700 transition duration-200 shadow-lg">
+                Calcular Materiales y Acero Total
+            </button>
+            <button type="button" onclick="showMainMenu()" class="w-full bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-400 transition duration-200">
+                Volver al Menú Principal
+            </button>
+        </form>
+
+        <div id="column-results-container" class="mt-6 p-4 bg-red-50 rounded-xl shadow-inner hidden">
+            <h3 class="text-2xl font-extrabold text-red-700 mb-4 text-center">✅ Resultados Consolidados de Columna</h3>
+            <div id="column-results-output" class="results-markdown"></div>
+        </div>
+        <div id="column-loading-indicator" class="mt-6 text-center text-red-600 hidden">
+            Calculando materiales de columna... por favor espera.
+        </div>
+        <div id="column-error-message" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden">
+            Ocurrió un error en el cálculo. Por favor, inténtalo de nuevo.
+        </div>
+    </div>
+    <!-- Fin Panel Columna -->
+
+
+    <script>
+        // Configuración global
+        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const apiKey = ""; // Dejar vacío para que Canvas lo inyecte
+
+        // Constantes de Muro
+        const BRICK_DIMENSIONS_CM = {
+            'King Kong 18': { l: 24.0, w: 13.0, h: 9.0 },
+            'King Kong Macizo': { l: 24.0, w: 13.0, h: 9.0 },
+            'Pandereta': { l: 24.0, w: 12.0, h: 9.0 },
+            'Otro': { l: 0.0, w: 0.0, h: 0.0 } 
+        };
+        const JOINT_THICKNESS = 0.015; // 1.5 cm en metros
+        
+        // CONSTANTES DE DOSIFICACIÓN POR m³ DE CONCRETO Y MORTERO
+        // C: Cemento (bolsas), A: Arena (m³), P: Piedra (m³)
+        const DOSIFICATIONS = {
+            // Concreto
+            '210': { C: 8.5, A: 0.48, P: 0.89 }, 
+            '175': { C: 7.5, A: 0.50, P: 0.82 },
+            // Mortero (Tarrajeo/Muro) - SOLO Cemento y Arena Fina
+            '1:4': { C: 12.0, A: 1.05 },  // Para 1m³ de mortero 1:4 (valores de referencia aproximados)
+            '1:5': { C: 10.0, A: 1.10 }   // Para 1m³ de mortero 1:5 (valores de referencia aproximados)
+        };
+        // Litros de Agua por m³ de Mortero (Referencia aproximada)
+        const WATER_LITERS_PER_M3_MORTAR = 220; 
+        // Litros de Agua por m³ de Concreto (Referencia aproximada)
+        const WATER_LITERS_PER_M3_CONCRETE = 180; 
+
+        // PESO DE ACERO POR METRO LINEAL (kg/m)
+        const STEEL_WEIGHTS = {
+            '6': 0.222,     // 6 mm
+            '8': 0.395,     // 8 mm
+            '9.5': 0.56,    // 3/8" (9.5 mm)
+        };
+
+        // --- Control de Navegación de Paneles ---
+        function hideAllPanels() {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('wall-calculator-panel').classList.add('hidden');
+            document.getElementById('plaster-calculator-panel').classList.add('hidden'); 
+            document.getElementById('roof-calculator-panel').classList.add('hidden');
+            document.getElementById('column-calculator-panel').classList.add('hidden'); 
+        }
+
+        function showMainMenu() {
+            hideAllPanels();
+            document.getElementById('main-menu').classList.remove('hidden');
+        }
+
+        function showWallCalculator() {
+            hideAllPanels();
+            document.getElementById('wall-calculator-panel').classList.remove('hidden');
+            document.getElementById('wall-results-container').classList.add('hidden');
+            document.getElementById('wall-error-message').classList.add('hidden');
+        }
+        
+        function showPlasterCalculator() { 
+            hideAllPanels();
+            document.getElementById('plaster-calculator-panel').classList.remove('hidden');
+            document.getElementById('plaster-results-container').classList.add('hidden');
+            document.getElementById('plaster-error-message').classList.add('hidden');
+        }
+
+        function showRoofCalculator() {
+            hideAllPanels();
+            document.getElementById('roof-calculator-panel').classList.remove('hidden');
+            document.getElementById('roof-results-container').classList.add('hidden');
+            document.getElementById('roof-error-message').classList.add('hidden');
+        }
+        
+        function showColumnCalculator() {
+            hideAllPanels();
+            document.getElementById('column-calculator-panel').classList.remove('hidden');
+            document.getElementById('column-results-container').classList.add('hidden');
+            document.getElementById('column-error-message').classList.add('hidden');
+        }
+
+
+        function showMessage(text) {
+            document.getElementById('message-text').innerText = text;
+            document.getElementById('message-box').classList.remove('hidden');
+            document.getElementById('message-box').classList.add('flex');
+        }
+
+        function hideMessage() {
+            document.getElementById('message-box').classList.add('hidden');
+            document.getElementById('message-box').classList.remove('flex');
+        }
+        
+        // --- Lógica de Cálculo de Tarrajeo (MODIFICADA) ---
+        async function calculatePlasterMaterials() {
+            // 1. Obtener Datos
+            const length = parseFloat(document.getElementById('plaster-length').value);
+            const height = parseFloat(document.getElementById('plaster-height').value);
+            const thicknessCM = parseFloat(document.getElementById('plaster-thickness').value);
+            const dosificationType = document.getElementById('plaster-dosification').value;
+
+            document.getElementById('plaster-results-container').classList.add('hidden');
+            document.getElementById('plaster-error-message').classList.add('hidden');
+            document.getElementById('plaster-loading-indicator').classList.remove('hidden');
+
+            // 2. Validación Mínima
+            if (isNaN(length) || isNaN(height) || isNaN(thicknessCM) || 
+                length <= 0 || height <= 0 || thicknessCM <= 0) {
+                
+                document.getElementById('plaster-loading-indicator').classList.add('hidden');
+                showMessage("Por favor, ingrese Largo, Alto y Espesor válidos (mayores a cero).");
+                return;
+            }
+
+            // 3. Cálculos
+            const thicknessM = thicknessCM / 100; // Espesor en metros
+            const surfaceArea = length * height; // Área en m²
+            const wastage = 1.05; // 5% de desperdicio
+            const totalVolume = surfaceArea * thicknessM * wastage; // Volumen en m³ (incluye 5% de desperdicio)
+            
+            const dosif = DOSIFICATIONS[dosificationType]; 
+            if (!dosif) {
+                document.getElementById('plaster-loading-indicator').classList.add('hidden');
+                showMessage("Dosificación de mortero no reconocida.");
+                return;
+            }
+
+            // Cálculo de Agua en Litros
+            const waterLiters = totalVolume * WATER_LITERS_PER_M3_MORTAR; 
+
+            // 4. Preparar Prompt para la IA (Usando el formato solicitado: llamativo, ordenado, sin tablas)
+            const systemPrompt = `
+                Actúa como un Ingeniero Civil experto en metrados de Perú.
+                Tu tarea es calcular los materiales de mortero y el costo total de Tarrajeo.
+                
+                1. Regla de Metrado: Usa dosificación ${dosificationType} (Cemento:Arena Fina) con 5% de desperdicio.
+                2. Proporciones: Para 1 m³ de mortero ${dosificationType} se requiere:
+                    - Cemento (42.5kg): ${dosif.C} bolsas
+                    - Arena Fina: ${dosif.A} m³
+                    - Agua: ${WATER_LITERS_PER_M3_MORTAR} Litros (referencia)
+                3. Precios de Referencia (Soles Peruanos S/):
+                    * Cemento (42.5kg): S/ 30.00 por bolsa.
+                    * Arena Fina: S/ 65.00 por metro cúbico.
+                    * Agua (Costo Estimado): S/ 0.05 por Litro (referencia).
+                    * Mano de Obra (Estimado): S/ 20.00 por m² de área de tarrajeo.
+
+                4. Estructura de Salida (MANDATORIA): Debes generar la respuesta usando el formato Markdown estricto para lograr la visualización deseada. El contenido debe ser LÍNEAS INDIVIDUALES Y ORDENADAS, sin usar tablas ni listados anidados.
+                
+                **IMPORTANTE:** NO incluyas ninguna introducción, conclusión, ni cálculos intermedios (ej: 'Cálculos de costos:', 'Cálculos intermedios:', 'Como Ingeniero Civil...'). Solo genera la estructura marcada a continuación:
+
+                    ### 1. Requerimiento de Materiales (Desperdicio 5%)
+
+                    * **Área de Tarrajeo:** [Valor] m²
+                    * **Volumen de Mortero:** [Valor] m³
+
+                    ---
+                    
+                    * **Cantidad de Cemento:** [Valor Redondeado al entero superior] bolsas
+                    * **Cantidad de Arena (m³):** [Valor a 2 decimales] m³
+                    * **Cantidad de Agua (Litros):** [Valor a 2 decimales] litros
+
+                    ### 2. Análisis de Costos Estimados
+
+                    * **Costo de Cemento:** S/ [Valor a 2 decimales]
+                    * **Costo de Arena:** S/ [Valor a 2 decimales]
+                    * **Costo de Agua:** S/ [Valor a 2 decimales]
+                    * **Costo de Mano de Obra:** S/ [Valor a 2 decimales]
+
+                    ---
+
+                    **COSTO TOTAL ESTIMADO:** S/ [Suma de todos los costos, en negrita, a 2 decimales]
+
+                5. Reglas de Redondeo: Redondear bolsas de cemento hacia el entero superior. Volúmenes y costos a 2 decimales.
+            `;
+
+            const userQuery = `
+                Calcula el mortero y los costos para el Tarrajeo con las siguientes entradas:
+                - Superficie (Área): ${surfaceArea.toFixed(2)} m²
+                - Espesor: ${thicknessCM} cm
+                - Volumen de Mortero Total (con 5% desperdicio): ${totalVolume.toFixed(3)} m³
+                - Cantidad de Agua Requerida: ${waterLiters.toFixed(2)} litros
+                - Dosificación: ${dosificationType}
+            `;
+
+            try {
+                const responseText = await callGeminiAPI(systemPrompt, userQuery);
+                
+                // Renderizar Markdown a HTML para un aspecto más atractivo
+                const htmlOutput = marked.parse(responseText);
+                
+                document.getElementById('plaster-results-output').innerHTML = htmlOutput;
+                document.getElementById('plaster-results-container').classList.remove('hidden');
+                document.getElementById('plaster-loading-indicator').classList.add('hidden');
+                
+            } catch (error) {
+                console.error("Error al calcular el tarrajeo con IA:", error);
+                document.getElementById('plaster-loading-indicator').classList.add('hidden');
+                document.getElementById('plaster-error-message').classList.remove('hidden');
+            }
+        }
+        // --- FIN Lógica de Cálculo de Tarrajeo ---
+
+        // --- Lógica de Cálculo de Muro (MODIFICADA) ---
+        function loadBrickDefaults() {
+            const brickType = document.getElementById('brick-type').value;
+            const dims = BRICK_DIMENSIONS_CM[brickType];
+
+            document.getElementById('custom-length').value = dims.l > 0 ? dims.l.toFixed(1) : '';
+            document.getElementById('custom-width').value = dims.w > 0 ? dims.w.toFixed(1) : '';
+            document.getElementById('custom-height').value = dims.h > 0 ? dims.h.toFixed(1) : '';
+            
+            if (brickType === 'Otro') {
+                document.getElementById('custom-length').value = '';
+                document.getElementById('custom-width').value = '';
+                document.getElementById('custom-height').value = '';
+            }
+        }
+
+        function calculateBricksNeeded(area, dim, layingMode) {
+            let effectiveL, effectiveH;
+
+            if (layingMode === 'soga') {
+                effectiveL = dim.l + JOINT_THICKNESS; 
+                effectiveH = dim.h + JOINT_THICKNESS; 
+            } else if (layingMode === 'cabeza') {
+                effectiveL = dim.w + JOINT_THICKNESS;
+                effectiveH = dim.h + JOINT_THICKNESS;
+            } else {
+                return 0;
+            }
+
+            const areaPerBrick = effectiveL * effectiveH;
+            if (areaPerBrick === 0) return 0;
+
+            const bricksPerM2 = 1 / areaPerBrick;
+            const totalBricks = bricksPerM2 * area;
+            const finalBricks = Math.ceil(totalBricks * 1.05); // +5% Desperdicio
+            
+            return finalBricks;
+        }
+
+        async function calculateWallMaterials() {
+            const length = parseFloat(document.getElementById('wall-length').value);
+            const height = parseFloat(document.getElementById('wall-height').value);
+            const layingMode = document.getElementById('laying-mode').value;
+
+            const customL = parseFloat(document.getElementById('custom-length').value);
+            const customW = parseFloat(document.getElementById('custom-width').value);
+            const customH = parseFloat(document.getElementById('custom-height').value);
+            
+            document.getElementById('wall-results-container').classList.add('hidden');
+            document.getElementById('wall-error-message').classList.add('hidden');
+            document.getElementById('wall-loading-indicator').classList.remove('hidden');
+            
+            if (isNaN(customL) || isNaN(customW) || isNaN(customH) || customL <= 0 || customW <= 0 || customH <= 0 ||
+                isNaN(length) || isNaN(height) || length <= 0 || height <= 0) {
+                document.getElementById('wall-loading-indicator').classList.add('hidden');
+                showMessage("Por favor, ingrese dimensiones válidas para el Muro y el Ladrillo.");
+                return;
+            }
+
+            const dim = { 
+                l: customL / 100, 
+                w: customW / 100, 
+                h: customH / 100 
+            };
+
+            const wallArea = length * height;
+            const totalBricks = calculateBricksNeeded(wallArea, dim, layingMode);
+            const morterVolume = wallArea * 0.023 * 1.05; // Volumen de mortero estimado por m² (aprox 2.3 cm promedio) * 1.05 desperdicio
+            const dosificationType = '1:4'; // Dosificación fija para muro
+
+            const dosif = DOSIFICATIONS[dosificationType]; 
+            const waterLiters = morterVolume * WATER_LITERS_PER_M3_MORTAR; 
+            
+            const systemPrompt = `
+                Actúa como un Ingeniero Civil experto en metrados de Perú.
+                Tu tarea es calcular los materiales de mortero y el costo total del Muro.
+                
+                1. Regla de Metrado: Usa dosificación ${dosificationType} (Cemento:Arena Fina) con 5% de desperdicio en mortero y ladrillos.
+                2. Proporciones: Para 1 m³ de mortero ${dosificationType} se requiere:
+                    - Cemento (42.5kg): ${dosif.C} bolsas
+                    - Arena Fina: ${dosif.A} m³
+                    - Agua: ${WATER_LITERS_PER_M3_MORTAR} Litros (referencia)
+                3. Precios de Referencia (Soles Peruanos S/):
+                    * Ladrillo: S/ 1.05 por unidad.
+                    * Cemento (42.5kg): S/ 30.00 por bolsa.
+                    * Arena Fina: S/ 65.00 por metro cúbico.
+                    * Agua (Costo Estimado): S/ 0.05 por Litro (referencia).
+                    * Mano de Obra (Estimado): S/ 25.00 por m² de área de muro.
+
+                4. Estructura de Salida (MANDATORIA): Debes generar la respuesta usando el formato Markdown estricto para lograr la visualización deseada. El contenido debe ser LÍNEAS INDIVIDUALES Y ORDENADAS, sin usar tablas ni listados anidados.
+
+                **IMPORTANTE:** NO incluyas ninguna introducción, conclusión, ni cálculos intermedios (ej: 'Cálculos de costos:', 'Cálculos intermedios:', 'Como Ingeniero Civil...'). Solo genera la estructura marcada a continuación:
+                    
+                    ### 1. Requerimiento de Materiales (Desperdicio 5%)
+
+                    * **Área de Muro:** [Valor] m²
+                    * **Volumen de Mortero:** [Valor] m³
+
+                    ---
+                    
+                    * **Cantidad de Ladrillos:** [Valor Entero] unidades
+                    * **Cantidad de Cemento:** [Valor Redondeado al entero superior] bolsas
+                    * **Cantidad de Arena (m³):** [Valor a 2 decimales] m³
+                    * **Cantidad de Agua (Litros):** [Valor a 2 decimales] litros
+
+                    ### 2. Análisis de Costos Estimados
+
+                    * **Costo de Ladrillos:** S/ [Valor a 2 decimales]
+                    * **Costo de Cemento:** S/ [Valor a 2 decimales]
+                    * **Costo de Arena:** S/ [Valor a 2 decimales]
+                    * **Costo de Agua:** S/ [Valor a 2 decimales]
+                    * **Costo de Mano de Obra:** S/ [Valor a 2 decimales]
+
+                    ---
+
+                    **COSTO TOTAL ESTIMADO:** S/ [Suma de todos los costos, en negrita, a 2 decimales]
+
+                5. Reglas de Redondeo: Redondear bolsas de cemento hacia el entero superior. Ladrillos al entero superior. Volúmenes y costos a 2 decimales.
+            `;
+
+            const userQuery = `
+                Calcula el mortero y los costos para el Muro con las siguientes entradas:
+                - Superficie (Área): ${wallArea.toFixed(2)} m²
+                - Ladrillos necesarios (ya con 5% desperdicio): ${totalBricks} unidades
+                - Volumen de Mortero Total (con 5% desperdicio): ${morterVolume.toFixed(3)} m³
+                - Cantidad de Agua Requerida: ${waterLiters.toFixed(2)} litros
+                - Dosificación: ${dosificationType}
+            `;
+
+            try {
+                const responseText = await callGeminiAPI(systemPrompt, userQuery);
+                
+                // Renderizar Markdown a HTML para un aspecto más atractivo
+                const htmlOutput = marked.parse(responseText);
+                
+                document.getElementById('wall-results-output').innerHTML = htmlOutput;
+                document.getElementById('wall-results-container').classList.remove('hidden');
+                document.getElementById('wall-loading-indicator').classList.add('hidden');
+                
+            } catch (error) {
+                console.error("Error al calcular el muro con IA:", error);
+                document.getElementById('wall-loading-indicator').classList.add('hidden');
+                document.getElementById('wall-error-message').classList.remove('hidden');
+            }
+        }
+        // --- FIN Lógica de Cálculo de Muro ---
+
+        // --- Lógica Consolidada de Losa y Vigas (MODIFICADA) ---
+        async function calculateConsolidatedRoofMaterials() {
+            // 1. Obtener Datos de Vigas
+            const beamWidth = parseFloat(document.getElementById('beam-width').value);
+            const beamLength = parseFloat(document.getElementById('beam-length').value);
+            const beamHeight = parseFloat(document.getElementById('beam-height').value);
+            const beamQuantity = parseInt(document.getElementById('beam-quantity').value);
+
+            // 2. Obtener Datos de Losa
+            const slabThickness = parseFloat(document.getElementById('slab-thickness').value);
+            const slabLength = parseFloat(document.getElementById('slab-length').value);
+            const slabWidth = parseFloat(document.getElementById('slab-width').value);
+            const slabQuantity = parseInt(document.getElementById('slab-quantity').value);
+            
+            const dosificationType = '210'; // Dosificación fija para techo
+            
+            document.getElementById('roof-results-container').classList.add('hidden');
+            document.getElementById('roof-error-message').classList.add('hidden');
+            document.getElementById('roof-loading-indicator').classList.remove('hidden');
+
+            // 3. Validación Mínima
+            if (isNaN(beamWidth) || isNaN(beamLength) || isNaN(beamHeight) || isNaN(beamQuantity) || 
+                isNaN(slabThickness) || isNaN(slabLength) || isNaN(slabWidth) || isNaN(slabQuantity) ||
+                beamWidth <= 0 || beamLength <= 0 || beamHeight <= 0 || beamQuantity <= 0 || 
+                slabThickness <= 0 || slabLength <= 0 || slabWidth <= 0 || slabQuantity <= 0) {
+                
+                document.getElementById('roof-loading-indicator').classList.add('hidden');
+                showMessage("Por favor, ingrese dimensiones y cantidades válidas (mayores a cero) para Viga y Losa.");
+                return;
+            }
+
+            // 4. Cálculo de Volúmenes Individuales
+            const beamVolume = beamWidth * beamLength * beamHeight * beamQuantity;
+            const slabVolume = slabThickness * slabLength * slabWidth * slabQuantity;
+            
+            // 5. Volumen Total de Concreto (sin desperdicio, ya que se aplica en las proporciones de dosificación)
+            const totalVolume = beamVolume + slabVolume;
+            const dosif = DOSIFICATIONS[dosificationType]; // Usamos los consumos de f'c=210
+            
+            // Cálculo de Agua en Litros
+            const waterLiters = totalVolume * WATER_LITERS_PER_M3_CONCRETE;
+
+            // 6. Preparar Prompt para la IA
+            const systemPrompt = `
+                Actúa como un Ingeniero Civil experto en metrados de Perú.
+                Tu tarea es calcular los materiales de concreto y el costo total CONSOLIDADO para la Losa y Vigas.
+                
+                1. Regla de Metrado: Dosificación f'c=${dosificationType} kg/cm² (Concreto). No se añade desperdicio explícito en volumen total, ya incluido en proporciones.
+                2. Proporciones: Para 1 m³ de concreto de ${dosificationType} kg/cm² se requiere:
+                    - Cemento (42.5kg): ${dosif.C} bolsas
+                    - Arena Gruesa: ${dosif.A} m³
+                    - Grava: ${dosif.P} m³
+                    - Agua: ${WATER_LITERS_PER_M3_CONCRETE} Litros (referencia)
+                3. Precios de Referencia (Soles Peruanos S/):
+                    * Cemento (42.5kg): S/ 30.00 por bolsa.
+                    * Arena Gruesa: S/ 65.00 por metro cúbico.
+                    * Grava: S/ 75.00 por metro cúbico.
+                    * Agua (Costo Estimado): S/ 0.05 por Litro (referencia).
+                    * Mano de Obra (Estimado): S/ 80.00 por m³ de concreto.
+
+                4. Estructura de Salida (MANDATORIA): Debes generar la respuesta usando el formato Markdown estricto para lograr la visualización deseada. El contenido debe ser LÍNEAS INDIVIDUALES Y ORDENADAS, sin usar tablas ni listados anidados.
+                
+                **IMPORTANTE:** NO incluyas ninguna introducción, conclusión, ni cálculos intermedios (ej: 'Cálculos de costos:', 'Cálculos intermedios:', 'Como Ingeniero Civil...'). Solo genera la estructura marcada a continuación:
+                    
+                    ### 1. Requerimiento de Materiales (Concreto f'c=${dosificationType})
+
+                    * **Volumen Total de Concreto:** [Valor] m³
+
+                    ---
+                    
+                    * **Cantidad de Cemento:** [Valor Redondeado al entero superior] bolsas
+                    * **Cantidad de Arena (m³):** [Valor a 2 decimales] m³
+                    * **Cantidad de Grava (m³):** [Valor a 2 decimales] m³
+                    * **Cantidad de Agua (Litros):** [Valor a 2 decimales] litros
+
+                    ### 2. Análisis de Costos Estimados
+
+                    * **Costo de Cemento:** S/ [Valor a 2 decimales]
+                    * **Costo de Arena:** S/ [Valor a 2 decimales]
+                    * **Costo de Grava:** S/ [Valor a 2 decimales]
+                    * **Costo de Agua:** S/ [Valor a 2 decimales]
+                    * **Costo de Mano de Obra:** S/ [Valor a 2 decimales]
+
+                    ---
+
+                    **COSTO TOTAL ESTIMADO:** S/ [Suma de todos los costos, en negrita, a 2 decimales]
+
+                5. Reglas de Redondeo: Redondear bolsas de cemento hacia el entero superior. Volúmenes y costos a 2 decimales.
+            `;
+
+            const userQuery = `
+                Calcula los materiales y costos totales CONSOLIDADOS para la Losa y Vigas.
+                - Volumen total de concreto: ${totalVolume.toFixed(3)} m³
+                - Cantidad de Agua Requerida: ${waterLiters.toFixed(2)} litros
+                - Dosificación: ${dosificationType} kg/cm²
+            `;
+            
+            try {
+                const responseText = await callGeminiAPI(systemPrompt, userQuery);
+                
+                // Renderizar Markdown a HTML
+                const htmlOutput = marked.parse(responseText);
+                
+                document.getElementById('roof-results-output').innerHTML = htmlOutput;
+                document.getElementById('roof-results-container').classList.remove('hidden');
+                document.getElementById('roof-loading-indicator').classList.add('hidden');
+                
+            } catch (error) {
+                console.error("Error al calcular el techo consolidado con IA:", error);
+                document.getElementById('roof-loading-indicator').classList.add('hidden');
+                document.getElementById('roof-error-message').classList.remove('hidden');
+            }
+        }
+        // --- FIN Lógica Consolidada de Losa y Vigas ---
+
+        // --- Lógica de Cálculo de Columna (MODIFICADA) ---
+        async function calculateColumnMaterials() {
+            
+            // 1. Obtener Datos de Geometría
+            const base = parseFloat(document.getElementById('col-base').value);
+            const side = parseFloat(document.getElementById('col-side').value);
+            const height = parseFloat(document.getElementById('col-height').value);
+            const quantity = parseInt(document.getElementById('col-quantity').value);
+            
+            // 2. Obtener Datos de Materiales
+            const dosificationType = document.getElementById('col-dosification').value;
+            const dosif = DOSIFICATIONS[dosificationType];
+            const steelRate = parseFloat(document.getElementById('col-steel-rate').value);
+            const stirrupSpacing = parseFloat(document.getElementById('stirrup-spacing').value);
+            const stirrupDiameterMM = document.getElementById('stirrup-diameter').value;
+            
+            document.getElementById('column-results-container').classList.add('hidden');
+            document.getElementById('column-error-message').classList.add('hidden');
+            document.getElementById('column-loading-indicator').classList.remove('hidden');
+
+            // 3. Validación Mínima
+            if (isNaN(base) || isNaN(side) || isNaN(height) || isNaN(quantity) || isNaN(steelRate) || isNaN(stirrupSpacing) ||
+                base <= 0 || side <= 0 || height <= 0 || quantity <= 0 || steelRate < 50 || stirrupSpacing <= 0) {
+                
+                document.getElementById('column-loading-indicator').classList.add('hidden');
+                showMessage("Por favor, ingrese dimensiones, cantidad y tasa de acero válidas (mayores a cero).");
+                return;
+            }
+
+            // 4. Cálculo de Volúmenes y Pesos
+            const singleVolume = base * side * height;
+            const totalVolume = singleVolume * quantity;
+            
+            // 4.1. Cálculo de Acero Longitudinal
+            const totalLongitudinalSteel = totalVolume * steelRate * 1.05; // kg (incluye 5% desperdicio)
+            
+            // 4.2. Cálculo de Acero de Estribos (Stirrups) - Solo para mostrar detalle, el costo se usa del acero total
+            const perimeterStirrup = 2 * (base + side); 
+            const stirrupsPerColumn = Math.ceil(height / stirrupSpacing) + 1; 
+            const totalStirrups = stirrupsPerColumn * quantity;
+            const totalStirrupLength = totalStirrups * perimeterStirrup;
+            const stirrupWeightPerMeter = STEEL_WEIGHTS[stirrupDiameterMM];
+            const totalStirrupSteel = totalStirrupLength * stirrupWeightPerMeter * 1.05; // kg (incluye 5% desperdicio)
+            
+            // Peso total de Acero
+            const grandTotalSteel = totalLongitudinalSteel + totalStirrupSteel;
+            
+            // Cálculo de Agua en Litros
+            const waterLiters = totalVolume * WATER_LITERS_PER_M3_CONCRETE;
+            
+            // 5. Preparar Prompt para la IA
+            const systemPrompt = `
+                Actúa como un Ingeniero Civil experto en metrados de Perú.
+                Tu tarea es calcular los materiales de concreto y el costo total CONSOLIDADO para la Columna(s).
+                
+                1. Regla de Metrado: Dosificación f'c=${dosificationType} kg/cm² (Concreto) y Acero con 5% de desperdicio.
+                2. Proporciones: Para 1 m³ de concreto de ${dosificationType} kg/cm² se requiere:
+                    - Cemento (42.5kg): ${dosif.C} bolsas
+                    - Arena Gruesa: ${dosif.A} m³
+                    - Grava: ${dosif.P} m³
+                    - Agua: ${WATER_LITERS_PER_M3_CONCRETE} Litros (referencia)
+                3. Precios de Referencia (Soles Peruanos S/):
+                    * Cemento (42.5kg): S/ 30.00 por bolsa.
+                    * Arena Gruesa: S/ 65.00 por metro cúbico.
+                    * Grava: S/ 75.00 por metro cúbico.
+                    * Agua (Costo Estimado): S/ 0.05 por Litro (referencia).
+                    * Acero (Costo Estimado): S/ 7.00 por kg de acero total.
+                    * Mano de Obra (Estimado): S/ 100.00 por m³ de concreto.
+
+                4. Estructura de Salida (MANDATORIA): Debes generar la respuesta usando el formato Markdown estricto para lograr la visualización deseada. El contenido debe ser LÍNEAS INDIVIDUALES Y ORDENADAS, sin usar tablas ni listados anidados.
+                
+                **IMPORTANTE:** NO incluyas ninguna introducción, conclusión, ni cálculos intermedios (ej: 'Cálculos de costos:', 'Cálculos intermedios:', 'Como Ingeniero Civil...'). Solo genera la estructura marcada a continuación:
+                    
+                    ### 1. Requerimiento de Materiales (Concreto f'c=${dosificationType} y Acero)
+
+                    * **Volumen Total de Concreto:** [Valor] m³
+                    * **Peso Total de Acero:** [Valor a 2 decimales] kg
+
+                    ---
+                    
+                    * **Cantidad de Cemento:** [Valor Redondeado al entero superior] bolsas
+                    * **Cantidad de Arena (m³):** [Valor a 2 decimales] m³
+                    * **Cantidad de Grava (m³):** [Valor a 2 decimales] m³
+                    * **Cantidad de Agua (Litros):** [Valor a 2 decimales] litros
+
+                    ### 2. Análisis de Costos Estimados
+
+                    * **Costo de Cemento:** S/ [Valor a 2 decimales]
+                    * **Costo de Arena:** S/ [Valor a 2 decimales]
+                    * **Costo de Grava:** S/ [Valor a 2 decimales]
+                    * **Costo de Agua:** S/ [Valor a 2 decimales]
+                    * **Costo de Acero:** S/ [Valor a 2 decimales]
+                    * **Costo de Mano de Obra:** S/ [Valor a 2 decimales]
+
+                    ---
+
+                    **COSTO TOTAL ESTIMADO:** S/ [Suma de todos los costos, en negrita, a 2 decimales]
+
+                5. Reglas de Redondeo: Redondear bolsas de cemento hacia el entero superior. Volúmenes y costos a 2 decimales.
+            `;
+
+            const userQuery = `
+                Calcula los materiales y costos totales CONSOLIDADOS para ${quantity} columna(s).
+                - Volumen total de concreto: ${totalVolume.toFixed(3)} m³
+                - Peso total de acero requerido (incluyendo 5% desperdicio): ${grandTotalSteel.toFixed(2)} kg
+                - Cantidad de Agua Requerida: ${waterLiters.toFixed(2)} litros
+                - Dosificación: ${dosificationType} kg/cm²
+            `;
+            
+            try {
+                const responseText = await callGeminiAPI(systemPrompt, userQuery);
+                
+                // Renderizar Markdown a HTML
+                const htmlOutput = marked.parse(responseText);
+                
+                document.getElementById('column-results-output').innerHTML = htmlOutput;
+                document.getElementById('column-results-container').classList.remove('hidden');
+                document.getElementById('column-loading-indicator').classList.add('hidden');
+                
+            } catch (error) {
+                console.error("Error al calcular la columna con IA:", error);
+                document.getElementById('column-loading-indicator').classList.add('hidden');
+                document.getElementById('column-error-message').classList.remove('hidden');
+            }
+        }
+        // --- FIN Lógica de Cálculo de Columna ---
+
+
+        // Función para llamar a la API de Gemini (con exponencial backoff)
+        async function callGeminiAPI(systemPrompt, userQuery) {
+            // Se usa el modelo general para el cálculo y formato de texto.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            let response;
+            let attempts = 0;
+            const maxAttempts = 5;
+
+            while (attempts < maxAttempts) {
+                attempts++;
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        break; // Salir del bucle si la respuesta es exitosa
+                    } else if (response.status === 429 && attempts < maxAttempts) {
+                        // Implementar espera exponencial si hay límite de tasa
+                        const delay = Math.pow(2, attempts) * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        // Continuar al siguiente intento
+                    } else {
+                        throw new Error(`Error API: ${response.status} - ${response.statusText}`);
+                    }
+                } catch (error) {
+                    if (attempts === maxAttempts) {
+                        throw new Error(`Fallo final al intentar comunicarse con la API de Gemini: ${error.message}`);
+                    }
+                    // Esperar antes del siguiente intento si es un error de red/servidor
+                    const delay = Math.pow(2, attempts) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+            
+            if (!response || !response.ok) {
+                throw new Error("No se pudo obtener una respuesta exitosa de la API después de varios intentos.");
+            }
+
+            const result = await response.json();
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!text) {
+                throw new Error("Respuesta de la IA vacía o incompleta.");
+            }
+            return text;
+        }
+        
+        // Mostrar el menú principal al cargar
+        document.addEventListener('DOMContentLoaded', showMainMenu);
+        document.addEventListener('DOMContentLoaded', loadBrickDefaults);
+
+    </script>
+</body>
+</html>
